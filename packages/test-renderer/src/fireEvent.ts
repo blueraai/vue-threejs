@@ -1,17 +1,17 @@
-import type { RootStore } from '@react-three/fiber'
+import type { RootStore } from '@vue-three/fiber'
 
 import { toEventHandlerName } from './helpers/strings'
 
-import { ReactThreeTestInstance } from './createTestInstance'
+import { VueThreeTestInstance } from './createTestInstance'
 
 import type { Act, MockSyntheticEvent } from './types/public'
 import type { MockEventData } from './types/internal'
 
 export const createEventFirer = (act: Act, store: RootStore) => {
   const findEventHandler = (
-    element: ReactThreeTestInstance,
+    element: VueThreeTestInstance,
     eventName: string,
-  ): ((event: MockSyntheticEvent) => any) | null => {
+  ): ((event: MockSyntheticEvent) => unknown) | null => {
     const eventHandlerName = toEventHandlerName(eventName)
 
     const props = element.props
@@ -25,13 +25,13 @@ export const createEventFirer = (act: Act, store: RootStore) => {
     }
 
     console.warn(
-      `Handler for ${eventName} was not found. You must pass event names in camelCase or name of the handler https://github.com/pmndrs/react-three-fiber/blob/master/packages/test-renderer/markdown/rttr.md#create-fireevent`,
+      `Handler for ${eventName} was not found. You must pass event names in camelCase or name of the handler https://github.com/pmndrs/vue-three-fiber/blob/master/packages/test-renderer/markdown/vttr.md#create-fireevent`,
     )
 
     return null
   }
 
-  const createSyntheticEvent = (element: ReactThreeTestInstance, data: MockEventData): MockSyntheticEvent => {
+  const createSyntheticEvent = (element: VueThreeTestInstance, data: MockEventData): MockSyntheticEvent => {
     const raycastEvent = {
       camera: store.getState().camera,
       stopPropagation: () => {},
@@ -43,14 +43,18 @@ export const createEventFirer = (act: Act, store: RootStore) => {
     return raycastEvent
   }
 
-  const invokeEvent = async (element: ReactThreeTestInstance, eventName: string, data: MockEventData): Promise<any> => {
+  const invokeEvent = async (
+    element: VueThreeTestInstance,
+    eventName: string,
+    data: MockEventData,
+  ): Promise<unknown> => {
     const handler = findEventHandler(element, eventName)
 
     if (!handler) {
       return
     }
 
-    let returnValue: any
+    let returnValue: unknown
 
     await act(async () => {
       returnValue = handler(createSyntheticEvent(element, data))
@@ -60,10 +64,10 @@ export const createEventFirer = (act: Act, store: RootStore) => {
   }
 
   const fireEvent = async (
-    element: ReactThreeTestInstance,
+    element: VueThreeTestInstance,
     eventName: string,
     data: MockEventData = {},
-  ): Promise<any> => await invokeEvent(element, eventName, data)
+  ): Promise<unknown> => await invokeEvent(element, eventName, data)
 
   return fireEvent
 }

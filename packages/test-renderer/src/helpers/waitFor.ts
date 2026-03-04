@@ -1,4 +1,4 @@
-import { act } from '@react-three/fiber'
+import { act } from '@vue-three/fiber'
 
 export interface WaitOptions {
   interval?: number

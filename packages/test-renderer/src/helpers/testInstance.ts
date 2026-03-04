@@ -1,4 +1,4 @@
-import type { ReactThreeTestInstance } from '../createTestInstance'
+import type { VueThreeTestInstance } from '../createTestInstance'
 import type { Obj } from '../types/internal'
 
 export const expectOne = <TItem>(items: TItem[], msg: string) => {
@@ -7,7 +7,7 @@ export const expectOne = <TItem>(items: TItem[], msg: string) => {
   }
 
   const prefix =
-    items.length === 0 ? 'RTTR: No instances found' : `RTTR: Expected 1 but found ${items.length} instances`
+    items.length === 0 ? 'VTTR: No instances found' : `VTTR: Expected 1 but found ${items.length} instances`
 
   throw new Error(`${prefix} ${msg}`)
 }
@@ -38,8 +38,8 @@ interface FindAllOptions {
 }
 
 export const findAll = (
-  root: ReactThreeTestInstance,
-  decider: (node: ReactThreeTestInstance) => boolean,
+  root: VueThreeTestInstance,
+  decider: (node: VueThreeTestInstance) => boolean,
   options: FindAllOptions = { includeRoot: true },
 ) => {
   const results = []

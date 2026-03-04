@@ -1,20 +1,20 @@
 {
-  "name": "@react-three/test-renderer",
+  "name": "@vue-three/test-renderer",
   "version": "9.1.0",
-  "description": "Test Renderer for react-three-fiber",
+  "description": "Test Renderer for vue-three-fiber",
   "author": "Josh Ellis",
   "license": "MIT",
   "private": false,
-  "main": "dist/react-three-test-renderer.cjs.js",
-  "module": "dist/react-three-test-renderer.esm.js",
-  "types": "dist/react-three-test-renderer.cjs.d.ts",
+  "main": "dist/vue-three-test-renderer.cjs.js",
+  "module": "dist/vue-three-test-renderer.esm.js",
+  "types": "dist/vue-three-test-renderer.cjs.d.ts",
   "bugs": {
-    "url": "https://github.com/pmndrs/react-three-fiber/issues"
+    "url": "https://github.com/pmndrs/vue-three-fiber/issues"
   },
-  "homepage": "https://github.com/pmndrs/react-three-fiber/packages/react-three-test-renderer",
+  "homepage": "https://github.com/pmndrs/vue-three-fiber/packages/vue-three-test-renderer",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pmndrs/react-three-fiber.git"
+    "url": "git+https://github.com/pmndrs/vue-three-fiber.git"
   },
   "preconstruct": {
     "entrypoints": [
@@ -22,8 +22,8 @@
     ]
   },
   "peerDependencies": {
-    "react": "^19.0.0",
-    "@react-three/fiber": ">=9.0.0",
+    "vue": "^3.3.0",
+    "@vue-three/fiber": ">=9.0.0",
     "three": ">=0.156"
   }
 }

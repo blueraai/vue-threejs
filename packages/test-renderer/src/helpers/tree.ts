@@ -1,5 +1,5 @@
-import * as THREE from 'three'
-import type { Instance } from '@react-three/fiber'
+import { Scene } from 'three'
+import type { Instance } from '@vue-three/fiber'
 import type { TreeNode, Tree } from '../types/public'
 import { lowerCaseFirstLetter } from './strings'
 
@@ -22,4 +22,4 @@ const toTreeBranch = (children: Instance[]): TreeNode[] =>
     )
   })
 
-export const toTree = (root: Instance<THREE.Scene>): Tree => toTreeBranch(root.children)
+export const toTree = (root: Instance<Scene>): Tree => toTreeBranch(root.children)

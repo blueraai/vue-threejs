@@ -1,25 +1,26 @@
-import * as React from 'react'
+import { defineComponent, h } from 'vue'
 
-import ReactThreeTestRenderer from '../index'
+import VueThreeTestRenderer from '../index'
 
-describe('ReactThreeTestRenderer instance methods', () => {
-  const ExampleComponent = () => {
-    return (
-      <group>
-        <mesh name="mesh_01">
-          <boxGeometry args={[2, 2]} />
-          <meshStandardMaterial color={0x0000ff} />
-        </mesh>
-        <mesh name="mesh_02">
-          <boxGeometry args={[2, 2]} />
-          <meshBasicMaterial color={0x0000ff} />
-        </mesh>
-      </group>
-    )
-  }
+describe('VueThreeTestRenderer instance methods', () => {
+  const ExampleComponent = defineComponent({
+    setup() {
+      return () =>
+        h('group', null, [
+          h('mesh', { name: 'mesh_01' }, [
+            h('boxGeometry', { args: [2, 2] }),
+            h('meshStandardMaterial', { color: 0x0000ff }),
+          ]),
+          h('mesh', { name: 'mesh_02' }, [
+            h('boxGeometry', { args: [2, 2] }),
+            h('meshBasicMaterial', { color: 0x0000ff }),
+          ]),
+        ])
+    },
+  })
 
   it('should pass the parent', async () => {
-    const { scene } = await ReactThreeTestRenderer.create(<ExampleComponent />)
+    const { scene } = await VueThreeTestRenderer.create(h(ExampleComponent))
 
     expect(scene.parent).toBeNull()
 
@@ -28,7 +29,7 @@ describe('ReactThreeTestRenderer instance methods', () => {
   })
 
   it('searches via .find() / .findAll()', async () => {
-    const { scene } = await ReactThreeTestRenderer.create(<ExampleComponent />)
+    const { scene } = await VueThreeTestRenderer.create(h(ExampleComponent))
 
     const foundByName = scene.find((node) => node.instance.name === 'mesh_01')
 
@@ -49,7 +50,7 @@ describe('ReactThreeTestRenderer instance methods', () => {
   })
 
   it('searches via .findByType() / findAllByType()', async () => {
-    const { scene } = await ReactThreeTestRenderer.create(<ExampleComponent />)
+    const { scene } = await VueThreeTestRenderer.create(h(ExampleComponent))
 
     const foundByStandardMaterial = scene.findByType('MeshStandardMaterial')
 
@@ -70,7 +71,7 @@ describe('ReactThreeTestRenderer instance methods', () => {
   })
 
   it('searches via .findByProps() / .findAllByProps()', async () => {
-    const { scene } = await ReactThreeTestRenderer.create(<ExampleComponent />)
+    const { scene } = await VueThreeTestRenderer.create(h(ExampleComponent))
 
     const foundByName = scene.findByProps({
       name: 'mesh_01',
@@ -98,7 +99,7 @@ describe('ReactThreeTestRenderer instance methods', () => {
   })
 
   it('searches RegExp via .findByProps() / .findAllByProps()', async () => {
-    const { scene } = await ReactThreeTestRenderer.create(<ExampleComponent />)
+    const { scene } = await VueThreeTestRenderer.create(h(ExampleComponent))
 
     const single = scene.findByProps({
       name: /^mesh_01$/,

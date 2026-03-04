@@ -1,30 +1,31 @@
-import type { Camera, RenderProps } from '@react-three/fiber'
+import type { VNode } from 'vue'
+import type { Camera, RenderProps } from '@vue-three/fiber'
 
-import { ReactThreeTestInstance } from '../createTestInstance'
+import { VueThreeTestInstance } from '../createTestInstance'
 
 import type { MockEventData, CreateCanvasParameters } from './internal'
 
-export { ReactThreeTestInstance }
+export { VueThreeTestInstance }
 
 export type MockSyntheticEvent = {
   camera: Camera
   stopPropagation: () => void
-  target: ReactThreeTestInstance
-  currentTarget: ReactThreeTestInstance
+  target: VueThreeTestInstance
+  currentTarget: VueThreeTestInstance
   sourceEvent: MockEventData
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export type CreateOptions = CreateCanvasParameters & RenderProps<HTMLCanvasElement>
 
 export type Renderer = {
-  scene: ReactThreeTestInstance
+  scene: VueThreeTestInstance
   unmount: () => Promise<void>
   getInstance: () => null | unknown
-  update: (el: React.ReactNode) => Promise<void>
+  update: (el: VNode) => Promise<void>
   toTree: () => Tree | undefined
   toGraph: () => SceneGraph | undefined
-  fireEvent: (element: ReactThreeTestInstance, handler: string, data?: MockEventData) => Promise<any>
+  fireEvent: (element: VueThreeTestInstance, handler: string, data?: MockEventData) => Promise<unknown>
   advanceFrames: (frames: number, delta: number | number[]) => Promise<void>
 }
 
@@ -39,11 +40,11 @@ export type SceneGraph = SceneGraphItem[]
 export interface TreeNode {
   type: string
   props: {
-    [key: string]: any
+    [key: string]: unknown
   }
   children: TreeNode[]
 }
 
 export type Tree = TreeNode[]
 
-export type { Act } from '@react-three/fiber'
+export type { Act } from '@vue-three/fiber'

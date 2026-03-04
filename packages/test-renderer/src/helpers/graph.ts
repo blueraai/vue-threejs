@@ -1,6 +1,6 @@
-import type { Instance } from '@react-three/fiber'
+import type { Instance } from '@vue-three/fiber'
 import type { SceneGraphItem } from '../types/public'
-import type * as THREE from 'three'
+import type { Object3D } from 'three'
 
 const graphObjectFactory = (
   type: SceneGraphItem['type'],
@@ -13,7 +13,7 @@ const graphObjectFactory = (
 })
 
 // Helper function to process raw THREE.js children objects
-function processThreeChildren(children: THREE.Object3D[]): SceneGraphItem[] {
+function processThreeChildren(children: Object3D[]): SceneGraphItem[] {
   return children.map((object) =>
     graphObjectFactory(
       object.type,
@@ -25,7 +25,7 @@ function processThreeChildren(children: THREE.Object3D[]): SceneGraphItem[] {
 
 export const toGraph = (object: Instance): SceneGraphItem[] => {
   return object.children.map((child) => {
-    // Process standard R3F children
+    // Process standard V3F children
     const children = toGraph(child)
 
     // For primitives, also include THREE.js object children

@@ -1,7 +1,8 @@
-import * as React from 'react'
-import * as THREE from 'three'
+import type { VNode } from 'vue'
+import { Scene } from 'three'
+import THREE from 'three'
 
-import { extend, _roots as mockRoots, createRoot, reconciler, act, Instance } from '@react-three/fiber'
+import { extend, _roots as mockRoots, createRoot, reconciler, act, Instance } from '@vue-three/fiber'
 
 import { toTree } from './helpers/tree'
 import { toGraph } from './helpers/graph'
@@ -14,9 +15,10 @@ import { wrapFiber } from './createTestInstance'
 import { waitFor, WaitOptions } from './helpers/waitFor'
 
 // Extend catalogue for render API in tests.
-extend(THREE as any)
+const threeModule: Record<string, unknown> = THREE
+extend(threeModule)
 
-const create = async (element: React.ReactNode, options?: Partial<CreateOptions>): Promise<Renderer> => {
+const create = async (element: VNode, options?: Partial<CreateOptions>): Promise<Renderer> => {
   const canvas = createCanvas(options)
 
   const _root = createRoot(canvas)
@@ -36,7 +38,8 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
   const _store = mockRoots.get(canvas)!.store
 
   await act(async () => _root.render(element))
-  const _scene = (_store.getState().scene as Instance<THREE.Scene>['object']).__r3f!
+  const sceneObject: Instance<Scene>['object'] = _store.getState().scene
+  const _scene = sceneObject.__v3f!
 
   return {
     scene: wrapFiber(_scene),
@@ -49,15 +52,15 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
       // Bail if canvas is unmounted
       if (!mockRoots.has(canvas)) return null
 
-      // Traverse fiber nodes for R3F root
+      // Traverse fiber nodes for V3F root
       const root = { current: mockRoots.get(canvas)!.fiber.current }
       while (!root.current.child?.stateNode) root.current = root.current.child
 
-      // Return R3F instance from root
+      // Return V3F instance from root
       return reconciler.getPublicRootInstance(root)
     },
-    async update(newElement: React.ReactNode) {
-      if (!mockRoots.has(canvas)) return console.warn('RTTR: attempted to update an unmounted root!')
+    async update(newElement: VNode) {
+      if (!mockRoots.has(canvas)) return console.warn('VTTR: attempted to update an unmounted root!')
 
       await act(async () => {
         _root.render(newElement)
@@ -79,11 +82,13 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
       storeSubscribers.forEach((subscriber) => {
         for (let i = 0; i < frames; i++) {
           if (Array.isArray(delta)) {
+            const deltaArr: number[] = delta
             promises.push(
-              new Promise(() => subscriber.ref.current(state, (delta as number[])[i] || (delta as number[])[-1])),
+              new Promise(() => subscriber.ref.current(state, deltaArr[i] || deltaArr[deltaArr.length - 1])),
             )
           } else {
-            promises.push(new Promise(() => subscriber.ref.current(state, delta as number)))
+            const deltaNum: number = delta
+            promises.push(new Promise(() => subscriber.ref.current(state, deltaNum)))
           }
         }
       })
@@ -96,5 +101,14 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
 export { create, act, waitFor }
 export type { WaitOptions }
 
-export * as ReactThreeTest from './types'
+export type {
+  MockSyntheticEvent,
+  CreateOptions,
+  Renderer,
+  SceneGraphItem,
+  SceneGraph,
+  TreeNode,
+  Tree,
+} from './types/public'
+export { VueThreeTestInstance } from './types/public'
 export default { create, act, waitFor }
