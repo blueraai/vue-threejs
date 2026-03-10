@@ -1,0 +1,44 @@
+node_modules/
+coverage/
+dist/
+build/
+types/
+packages/fiber/react-reconciler/
+# commit types in src
+!packages/*/src/types/
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+.vscode
+.docz/
+package-lock.json
+coverage/
+.idea
+yarn-error.log
+.size-snapshot.json
+__tests__/__image_snapshots__/__diff_output__
+
+# Claude Code local files (not committed)
+*.local.md
+.claude/
+docs/.vitepress/cache/
+.npm-cache/
+.playwright-mcp/
+ask-codex.sh
+console-inline-basic.txt
+reparenting-console.txt
+resetprops-console.txt
+
+# Bluera plugins - shared config committed, local/state ignored
+.bluera/
+!.bluera/bluera-base/
+!.bluera/bluera-knowledge/
+.bluera/bluera-base/*
+.bluera/bluera-knowledge/*
+!.bluera/bluera-base/config.json
+!.bluera/bluera-base/TODO.txt
+!.bluera/bluera-knowledge/stores.config.json
+# Claude Code local files (not committed)
+*.local.md

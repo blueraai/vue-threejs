@@ -1,0 +1,57 @@
+import path from 'node:path'
+import { defineConfig } from 'vitest/config'
+import vueJsx from '@vitejs/plugin-vue-jsx'
+
+// Narrowly-scoped allowlist of Three.js element tags used in tests.
+// These are rendered via Vue's custom renderer, not the DOM, so Vue
+// must be told they are custom elements to avoid resolveComponent warnings.
+const FIBER_INTRINSICS = new Set([
+  'group',
+  'mesh',
+  'mock',
+  'primitive',
+  'boxGeometry',
+  'meshStandardMaterial',
+  'meshBasicMaterial',
+  'object3D',
+  'color',
+  'bufferGeometry',
+  'bufferAttribute',
+  'line',
+  'threeLine',
+  'threeRandom',
+])
+
+export default defineConfig({
+  plugins: [
+    vueJsx({
+      isCustomElement: (tag) => FIBER_INTRINSICS.has(tag),
+    }),
+  ],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    testPathIgnorePatterns: ['/node_modules/', '/\\.claude/', '/dist/'],
+    setupFiles: ['./packages/shared/setupTests.ts'],
+    coverage: {
+      exclude: ['node_modules/', 'packages/fiber/dist', 'packages/fiber/src/index', 'packages/test-renderer/dist'],
+      provider: 'v8',
+    },
+    testTimeout: 10000,
+  },
+  resolve: {
+    alias: [
+      { find: 'three', replacement: 'three' },
+      { find: /^@vue-three\/fiber$/, replacement: path.resolve(__dirname, 'packages/fiber/src/index.ts') },
+      { find: /^@vue-three\/fiber\/(.*)$/, replacement: path.resolve(__dirname, 'packages/fiber/src/$1') },
+      {
+        find: /^@vue-three\/test-renderer$/,
+        replacement: path.resolve(__dirname, 'packages/test-renderer/src/index.tsx'),
+      },
+      {
+        find: /^@vue-three\/test-renderer\/(.*)$/,
+        replacement: path.resolve(__dirname, 'packages/test-renderer/$1'),
+      },
+    ],
+  },
+})

@@ -1,0 +1,26 @@
+{
+  "name": "vue-three-fiber-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Example app for vue-three-fiber",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "three": "^0.172.0",
+    "three-stdlib": "^2.35.16",
+    "vue": "^3.4.0",
+    "vue-router": "^4.3.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.172.0",
+    "@vitejs/plugin-vue": "^5.0.0",
+    "@vitejs/plugin-vue-jsx": "^3.1.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.2.10"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "@vue-three/test-renderer",
+  "version": "1.0.0",
+  "description": "Test renderer for @vue-three/fiber.",
+  "author": "Chris Braddock (https://github.com/chrisbraddock)",
+  "license": "MIT",
+  "private": false,
+  "main": "dist/vue-three-test-renderer.cjs.js",
+  "module": "dist/vue-three-test-renderer.esm.js",
+  "types": "dist/vue-three-test-renderer.cjs.d.ts",
+  "bugs": {
+    "url": "https://github.com/chrisbraddock/vue-three-fiber/issues"
+  },
+  "homepage": "https://github.com/chrisbraddock/vue-three-fiber/tree/master/packages/test-renderer",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chrisbraddock/vue-three-fiber.git"
+  },
+  "preconstruct": {
+    "entrypoints": [
+      "index.tsx"
+    ]
+  },
+  "peerDependencies": {
+    "vue": ">=3.3",
+    "@vue-three/fiber": ">=1.0.0",
+    "three": ">=0.156"
+  }
+}

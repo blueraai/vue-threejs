@@ -1,0 +1,10 @@
+dist/
+coverage/
+node_modules/
+packages/fiber/react-reconciler/
+.yarn/
+.bluera/
+docs/.vitepress/cache/
+.npm-cache/
+*.gltf
+*.mdx

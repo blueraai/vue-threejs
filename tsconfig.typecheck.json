@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "es2022",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "module": "commonjs",
+    "downlevelIteration": true,
+    "strict": false,
+    "noEmit": true,
+    "emitDeclarationOnly": false,
+    "types": ["node", "offscreencanvas"]
+  },
+  "include": ["packages/fiber/src/**/*", "packages/test-renderer/src/**/*"],
+  "exclude": ["packages/**/dist/**", "packages/**/*.test.*", "packages/**/__tests__/**"]
+}

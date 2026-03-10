@@ -1,0 +1,46 @@
+{
+  "name": "@vue-three/fiber",
+  "version": "1.0.0",
+  "description": "A Vue.js renderer for Three.js",
+  "keywords": [
+    "vue",
+    "renderer",
+    "fiber",
+    "three",
+    "threejs"
+  ],
+  "author": "Chris Braddock (https://github.com/chrisbraddock)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/chrisbraddock/vue-three-fiber/issues"
+  },
+  "homepage": "https://github.com/chrisbraddock/vue-three-fiber#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chrisbraddock/vue-three-fiber.git"
+  },
+  "main": "dist/vue-three-fiber.cjs.js",
+  "module": "dist/vue-three-fiber.esm.js",
+  "types": "dist/vue-three-fiber.cjs.d.ts",
+  "sideEffects": false,
+  "preconstruct": {
+    "entrypoints": [
+      "index.ts"
+    ]
+  },
+  "scripts": {
+    "prebuild": "node -e \"require('node:fs').copyFileSync('../../README.md','readme.md')\""
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.17.8",
+    "@types/webxr": "*",
+    "@vueuse/core": "^10.0.0",
+    "base64-js": "^1.5.1",
+    "buffer": "^6.0.3",
+    "zustand": "^5.0.3"
+  },
+  "peerDependencies": {
+    "vue": ">=3.3",
+    "three": ">=0.156"
+  }
+}
