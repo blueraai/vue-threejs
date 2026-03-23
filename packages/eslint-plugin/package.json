@@ -1,6 +1,6 @@
 {
   "name": "@bluera/eslint-plugin-vue-threejs",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "ESLint rules for @bluera/vue-threejs.",
   "keywords": [
     "vue",

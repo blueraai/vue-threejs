@@ -1,6 +1,6 @@
 {
   "name": "@bluera/vue-threejs-postprocessing",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Vue-native postprocessing effects for @bluera/vue-threejs",
   "license": "MIT",
   "main": "dist/bluera-vue-threejs-postprocessing.cjs.js",

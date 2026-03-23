@@ -1,5 +1,11 @@
 # @bluera/vue-threejs-postprocessing
 
+## 1.1.1
+
+### Patch Changes
+
+- 0433707: Bump TypeScript to 5.9 and align @types/three with three@0.183.
+
 ## 1.1.0
 
 ### Minor Changes
