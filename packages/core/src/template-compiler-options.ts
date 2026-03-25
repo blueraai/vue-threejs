@@ -1,9 +1,10 @@
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const three: Record<string, unknown> = require('three')
+// Re-export three module keys to build the element set.
+// eslint-disable-next-line @typescript-eslint/no-namespace
+import * as threeExports from 'three'
 
 // Build the set of valid element tag names from three.js exports.
 // Mirrors the ThreeToJSXElements type: Uncapitalize<K> for each export.
-const threeElements = new Set<string>(Object.keys(three).map((k) => k[0].toLowerCase() + k.slice(1)))
+const threeElements = new Set<string>(Object.keys(threeExports).map((k) => k[0].toLowerCase() + k.slice(1)))
 
 // DOM-conflicting names are accessed via three* prefix (see three-types.ts)
 const DOM_CONFLICTS = ['audio', 'source', 'line', 'path']

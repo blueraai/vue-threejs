@@ -221,6 +221,7 @@ const demos: Record<string, DemoEntry> = {
 }
 
 type DemoKey = keyof typeof demos
+const demoKeys = Object.keys(demos) as DemoKey[]
 
 // ---------------------------------------------------------------------------
 // Hash ↔ demo key helpers
@@ -249,12 +250,14 @@ function keyFromHash(): DemoKey | null {
 const selected = ref<DemoKey>('Compose')
 const selectedDemo = computed(() => demos[selected.value])
 
-/** Key being hovered in the inline picker (for preview description) */
-const hoveredKey = ref<DemoKey | null>(null)
-const previewDemo = computed(() => demos[hoveredKey.value ?? selected.value])
+const selectedIndex = computed(() => demoKeys.indexOf(selected.value))
+const totalDemos = demoKeys.length
 
 /** Whether the modal is open */
 const modalOpen = ref(false)
+
+/** Whether the demo picker dropdown is open */
+const pickerOpen = ref(false)
 
 function openModal(key: DemoKey) {
   selected.value = key
@@ -264,10 +267,39 @@ function openModal(key: DemoKey) {
 
 function closeModal() {
   modalOpen.value = false
+  pickerOpen.value = false
 }
 
-function onEscape(e: KeyboardEvent) {
-  if (e.key === 'Escape' && modalOpen.value) closeModal()
+function navigatePrev() {
+  const idx = selectedIndex.value
+  selected.value = demoKeys[idx > 0 ? idx - 1 : demoKeys.length - 1]
+}
+
+function navigateNext() {
+  const idx = selectedIndex.value
+  selected.value = demoKeys[idx < demoKeys.length - 1 ? idx + 1 : 0]
+}
+
+function onKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    if (pickerOpen.value) {
+      pickerOpen.value = false
+    } else if (modalOpen.value) {
+      closeModal()
+    }
+    return
+  }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault()
+    navigatePrev()
+  }
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    e.preventDefault()
+    navigateNext()
+  }
+  if (e.key === 'Enter' && !modalOpen.value) {
+    openModal(selected.value)
+  }
 }
 
 /** Which inner tab is active: 'demo' or 'source' */
@@ -286,6 +318,7 @@ const highlighting = ref(false)
 let suppressHashSync = false
 watch(selected, (key) => {
   viewTab.value = 'demo'
+  pickerOpen.value = false
   if (!suppressHashSync && typeof window !== 'undefined') {
     history.replaceState(null, '', `#${toSlug(key)}`)
   }
@@ -303,7 +336,7 @@ function onHashChange() {
 
 onMounted(() => {
   window.addEventListener('hashchange', onHashChange)
-  window.addEventListener('keydown', onEscape)
+  window.addEventListener('keydown', onKeydown)
   // Read hash on mount (handles SSR hydration and SPA navigation)
   const fromHash = keyFromHash()
   if (fromHash) {
@@ -318,8 +351,18 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('hashchange', onHashChange)
-  window.removeEventListener('keydown', onEscape)
+  window.removeEventListener('keydown', onKeydown)
 })
+
+// Close picker on outside click
+function onPickerBackdrop() {
+  pickerOpen.value = false
+}
+
+function selectDemo(key: string) {
+  selected.value = key
+  pickerOpen.value = false
+}
 
 // Highlight source on demand
 watch(
@@ -409,99 +452,169 @@ onBeforeUnmount(teardownStats)
 </script>
 
 <template>
-  <div class="docs-examples">
+  <div class="docs-examples" tabindex="0">
     <!-- Inline preview (small) — visible when modal is closed -->
-    <div v-if="!modalOpen" class="docs-examples__preview" @click="openModal(selected)">
-      <div ref="stageEl" class="docs-examples__preview-stage">
+    <div v-if="!modalOpen" class="de-preview">
+      <div ref="stageEl" class="de-preview__stage">
         <ClientOnly>
           <component :is="selectedDemo.component" />
         </ClientOnly>
 
-        <!-- Dots nav -->
-        <div class="docs-examples__dots docs-examples__dots--preview" @mouseleave="hoveredKey = null">
-          <button
-            v-for="(demo, key) in demos"
-            :key="key"
-            type="button"
-            class="docs-examples__dot"
-            :class="{ 'docs-examples__dot--active': selected === key }"
-            :title="demo.title"
-            @mouseenter="hoveredKey = key as DemoKey"
-            @click.stop="selected = key as DemoKey" />
+        <!-- Edge arrows (hover-reveal, outside canvas interaction area) -->
+        <button type="button" class="de-preview__arrow de-preview__arrow--left" @click.stop="navigatePrev">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path
+              d="M12 4L6 10L12 16"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+        <button type="button" class="de-preview__arrow de-preview__arrow--right" @click.stop="navigateNext">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path
+              d="M8 4L14 10L8 16"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Footer bar: title + counter + expand -->
+      <div class="de-preview__bar">
+        <div class="de-preview__info">
+          <span class="de-preview__counter">{{ selectedIndex + 1 }}/{{ totalDemos }}</span>
+          <span class="de-preview__title">{{ selectedDemo.title }}</span>
         </div>
-
-        <span class="docs-examples__name">{{ previewDemo.title }}</span>
+        <div class="de-preview__actions">
+          <span class="de-preview__hint">use arrow keys</span>
+          <button type="button" class="de-preview__expand" @click="openModal(selected)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path
+                d="M2 6V2H6M10 2H14V6M14 10V14H10M6 14H2V10"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            Open
+          </button>
+        </div>
       </div>
 
-      <div class="docs-examples__preview-meta">
-        <strong>{{ previewDemo.title }}</strong> &mdash;
-        <span>{{ previewDemo.description }}</span>
-      </div>
+      <p class="de-preview__desc">{{ selectedDemo.description }}</p>
     </div>
 
     <!-- Modal -->
     <Teleport to="body">
-      <div v-if="modalOpen" class="docs-examples__backdrop" @click.self="closeModal">
-        <div class="docs-examples__modal">
-          <!-- Header: tabs + close -->
-          <div class="docs-examples__modal-header">
-            <div class="docs-examples__view-tabs">
+      <div v-if="modalOpen" class="de-backdrop" @click.self="closeModal">
+        <div class="de-modal">
+          <!-- Header: tabs + picker + close -->
+          <div class="de-modal__header">
+            <div class="de-modal__tabs">
               <button
                 type="button"
-                class="docs-examples__view-tab"
-                :class="{ 'docs-examples__view-tab--active': viewTab === 'demo' }"
+                class="de-modal__tab"
+                :class="{ 'de-modal__tab--active': viewTab === 'demo' }"
                 @click="viewTab = 'demo'">
                 Demo
               </button>
               <button
                 type="button"
-                class="docs-examples__view-tab"
-                :class="{ 'docs-examples__view-tab--active': viewTab === 'source' }"
+                class="de-modal__tab"
+                :class="{ 'de-modal__tab--active': viewTab === 'source' }"
                 @click="viewTab = 'source'">
                 Source
-                <span class="docs-examples__view-tab-badge">TSX</span>
+                <span class="de-modal__tab-badge">TSX</span>
               </button>
             </div>
-            <button type="button" class="docs-examples__close" @click="closeModal">&times;</button>
+
+            <!-- Compact nav: prev / dropdown selector / next -->
+            <div class="de-nav">
+              <button type="button" class="de-nav__arrow" @click="navigatePrev">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M10 3L5 8L10 13"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </button>
+
+              <button type="button" class="de-nav__selector" @click="pickerOpen = !pickerOpen">
+                <span class="de-nav__count">{{ selectedIndex + 1 }}/{{ totalDemos }}</span>
+                <span class="de-nav__title">{{ selectedDemo.title }}</span>
+                <svg
+                  class="de-nav__chevron"
+                  :class="{ 'de-nav__chevron--open': pickerOpen }"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none">
+                  <path
+                    d="M3 4.5L6 7.5L9 4.5"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </button>
+
+              <button type="button" class="de-nav__arrow" @click="navigateNext">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path
+                    d="M6 3L11 8L6 13"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" />
+                </svg>
+              </button>
+
+              <!-- Dropdown picker -->
+              <div v-if="pickerOpen" class="de-picker__backdrop" @click="onPickerBackdrop" />
+              <div v-if="pickerOpen" class="de-picker">
+                <button
+                  v-for="(demo, key) in demos"
+                  :key="key"
+                  type="button"
+                  class="de-picker__item"
+                  :class="{ 'de-picker__item--active': selected === key }"
+                  @click="selectDemo(key)">
+                  <span class="de-picker__item-title">{{ demo.title }}</span>
+                </button>
+              </div>
+            </div>
+
+            <button type="button" class="de-modal__close" @click="closeModal">&times;</button>
           </div>
 
-          <!-- Demo stage -->
-          <div v-show="viewTab === 'demo'" class="docs-examples__stage">
+          <!-- Demo stage — completely clean, no overlays -->
+          <div v-show="viewTab === 'demo'" class="de-stage">
             <ClientOnly>
               <component :is="selectedDemo.component" />
             </ClientOnly>
-
-            <div class="docs-examples__dots" @mouseleave="hoveredKey = null">
-              <button
-                v-for="(demo, key) in demos"
-                :key="key"
-                type="button"
-                class="docs-examples__dot"
-                :class="{ 'docs-examples__dot--active': selected === key }"
-                :title="demo.title"
-                @mouseenter="hoveredKey = key as DemoKey"
-                @click="selected = key as DemoKey" />
-            </div>
-
-            <span class="docs-examples__name">{{ previewDemo.title }}</span>
           </div>
 
           <!-- Source view -->
-          <div v-show="viewTab === 'source'" class="docs-examples__code-wrap">
-            <div class="docs-examples__code-header">
-              <span class="docs-examples__code-filename">{{ selected }}.tsx</span>
-              <span class="docs-examples__code-lines">{{ lineCount }} lines</span>
+          <div v-show="viewTab === 'source'" class="de-code">
+            <div class="de-code__header">
+              <span class="de-code__filename">{{ selected }}.tsx</span>
+              <span class="de-code__lines">{{ lineCount }} lines</span>
             </div>
-            <div v-if="highlighting" class="docs-examples__code-loading">Loading syntax highlighting...</div>
-            <div v-else class="docs-examples__code-container" v-html="highlightedHtml" />
+            <div v-if="highlighting" class="de-code__loading">Loading syntax highlighting...</div>
+            <div v-else class="de-code__container" v-html="highlightedHtml" />
           </div>
 
           <!-- Description -->
-          <div class="docs-examples__meta">
-            <h3>{{ previewDemo.title }}</h3>
-            <p>{{ previewDemo.description }}</p>
-            <p v-if="previewDemo.originalDemo" class="docs-examples__credit">
-              {{ previewDemo.originalDemo.label }}:
+          <div class="de-meta">
+            <p>{{ selectedDemo.description }}</p>
+            <p v-if="selectedDemo.originalDemo" class="de-meta__credit">
+              {{ selectedDemo.originalDemo.label }}:
               <a :href="selectedDemo.originalDemo.url" target="_blank" rel="noreferrer noopener">
                 {{ selectedDemo.originalDemo.url }}
               </a>
@@ -517,12 +630,14 @@ onBeforeUnmount(teardownStats)
 .docs-examples {
   display: grid;
   gap: 0.75rem;
+  outline: none;
 }
 
-/* --- Inline preview --- */
+/* =========================================================================
+   INLINE PREVIEW
+   ========================================================================= */
 
-.docs-examples__preview {
-  cursor: pointer;
+.de-preview {
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--vp-c-divider);
@@ -531,145 +646,209 @@ onBeforeUnmount(teardownStats)
     box-shadow 0.2s ease;
 }
 
-.docs-examples__preview:hover {
+.de-preview:hover {
   border-color: var(--vp-c-brand-1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
 }
 
-.docs-examples__preview-stage {
+.de-preview__stage {
   position: relative;
   width: 100%;
-  height: 320px;
+  height: 340px;
   overflow: hidden;
   background:
     radial-gradient(circle at top, rgba(255, 255, 255, 0.08), transparent 45%),
     linear-gradient(180deg, #12131b 0%, #191b24 100%);
 }
 
-.docs-examples__preview-meta {
-  padding: 10px 14px;
-  font-size: 0.82rem;
-  line-height: 1.5;
-  color: var(--vp-c-text-2);
+/* Edge arrows — invisible until stage hover */
+.de-preview__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 64px;
+  border: none;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.25s ease,
+    background 0.15s ease;
+}
+
+.de-preview__arrow--left {
+  left: 0;
+  border-radius: 0 8px 8px 0;
+}
+
+.de-preview__arrow--right {
+  right: 0;
+  border-radius: 8px 0 0 8px;
+}
+
+.de-preview__stage:hover .de-preview__arrow {
+  opacity: 1;
+}
+
+.de-preview__arrow:hover {
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+}
+
+/* Footer bar */
+.de-preview__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
   background: var(--vp-c-bg-soft);
   border-top: 1px solid var(--vp-c-divider);
 }
 
-.docs-examples__preview-meta strong {
-  color: var(--vp-c-text-1);
+.de-preview__info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
-.docs-examples__preview-meta span {
+.de-preview__counter {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--vp-c-text-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+}
+
+.de-preview__title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--vp-c-text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.de-preview__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.de-preview__hint {
+  font-size: 0.7rem;
+  color: var(--vp-c-text-3);
+  letter-spacing: 0.01em;
+}
+
+.de-preview__expand {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-text-2);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.de-preview__expand:hover {
+  border-color: #e8755a;
+  color: #e8755a;
+}
+
+/* Description below the bar */
+.de-preview__desc {
+  margin: 0;
+  padding: 8px 14px 10px;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--vp-c-text-2);
+  background: var(--vp-c-bg-soft);
+  border-top: 1px solid var(--vp-c-divider);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-/* Smaller dots in preview */
-.docs-examples__dots--preview .docs-examples__dot {
-  width: 12px;
-  height: 12px;
-  margin: 3px;
-  background: rgba(255, 255, 255, 0.7);
-}
+/* =========================================================================
+   MODAL BACKDROP
+   ========================================================================= */
 
-.docs-examples__dots--preview .docs-examples__dot:hover {
-  background: #fff;
-}
-
-.docs-examples__dots--preview .docs-examples__dot--active {
-  background: #e8755a;
-}
-
-.docs-examples__dots--preview .docs-examples__dot--active:hover {
-  background: #ff8866;
-}
-
-/* --- Shared dot styles --- */
-
-.docs-examples__dot {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  margin: 6px;
-  border: none;
-  background: var(--vp-c-divider);
-  cursor: pointer;
-  padding: 0;
-  transition:
-    background 0.15s ease,
-    transform 0.15s ease;
-}
-
-.docs-examples__dot:hover {
-  transform: scale(1.25);
-  background: var(--vp-c-text-3);
-}
-
-.docs-examples__dot--active {
-  background: #e8755a;
-}
-
-.docs-examples__dot--active:hover {
-  background: #ff8866;
-}
-
-/* --- Modal backdrop --- */
-
-.docs-examples__backdrop {
+.de-backdrop {
   position: fixed;
   inset: 0;
   z-index: 100;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
 }
 
-/* --- Modal --- */
+/* =========================================================================
+   MODAL
+   ========================================================================= */
 
-.docs-examples__modal {
-  width: 90vw;
-  height: 90vh;
-  max-width: 1200px;
+.de-modal {
+  width: 92vw;
+  height: 92vh;
+  max-width: 1280px;
   display: flex;
   flex-direction: column;
   background: var(--vp-c-bg);
-  border-radius: 16px;
+  border-radius: 14px;
   border: 1px solid var(--vp-c-divider);
   overflow: hidden;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
 }
 
 /* --- Modal header --- */
 
-.docs-examples__modal-header {
+.de-modal__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 0.5rem 0 0;
+  padding: 0 8px 0 0;
   border-bottom: 1px solid var(--vp-c-divider);
   flex-shrink: 0;
-}
-
-.docs-examples__view-tabs {
-  display: flex;
   gap: 0;
 }
 
-.docs-examples__view-tab {
+.de-modal__tabs {
+  display: flex;
+}
+
+.de-modal__tab {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.65rem 1.2rem;
+  padding: 0.6rem 1.1rem;
   border: none;
   background: none;
   color: var(--vp-c-text-2);
   font: inherit;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   border-bottom: 2px solid transparent;
@@ -679,53 +858,198 @@ onBeforeUnmount(teardownStats)
     border-color 0.18s ease;
 }
 
-.docs-examples__view-tab:hover {
+.de-modal__tab:hover {
   color: var(--vp-c-text-1);
 }
 
-.docs-examples__view-tab--active {
-  color: var(--vp-c-brand-1);
-  border-bottom-color: var(--vp-c-brand-1);
+.de-modal__tab--active {
+  color: #e8755a;
+  border-bottom-color: #e8755a;
 }
 
-.docs-examples__view-tab-badge {
+.de-modal__tab-badge {
   display: inline-block;
-  padding: 0.1rem 0.4rem;
+  padding: 1px 5px;
   border-radius: 4px;
   background: var(--vp-c-bg-soft);
   color: var(--vp-c-text-3);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   line-height: 1.4;
 }
 
-.docs-examples__close {
+/* --- Compact nav (center of header) --- */
+
+.de-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  margin-right: 8px;
+  position: relative;
+}
+
+.de-nav__arrow {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: none;
+  color: var(--vp-c-text-3);
+  cursor: pointer;
+  border-radius: 6px;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.de-nav__arrow:hover {
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-1);
+}
+
+.de-nav__selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 6px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-1);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+  max-width: 260px;
+}
+
+.de-nav__selector:hover {
+  border-color: var(--vp-c-text-3);
+}
+
+.de-nav__count {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--vp-c-text-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.de-nav__title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.de-nav__chevron {
+  flex-shrink: 0;
+  color: var(--vp-c-text-3);
+  transition: transform 0.2s ease;
+}
+
+.de-nav__chevron--open {
+  transform: rotate(180deg);
+}
+
+/* --- Dropdown picker --- */
+
+.de-picker__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 49;
+}
+
+.de-picker {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 50;
+  width: 280px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: var(--vp-c-bg);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  padding: 4px;
+}
+
+.de-picker__item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 7px 10px;
   border: none;
   background: none;
   color: var(--vp-c-text-2);
-  font-size: 1.4rem;
+  font: inherit;
+  font-size: 0.82rem;
   cursor: pointer;
   border-radius: 6px;
+  text-align: left;
+  transition:
+    background 0.1s ease,
+    color 0.1s ease;
+}
+
+.de-picker__item:hover {
+  background: var(--vp-c-bg-soft);
+  color: var(--vp-c-text-1);
+}
+
+.de-picker__item--active {
+  color: #e8755a;
+  background: rgba(232, 117, 90, 0.08);
+}
+
+.de-picker__item--active:hover {
+  background: rgba(232, 117, 90, 0.14);
+}
+
+.de-picker__item-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- Close button --- */
+
+.de-modal__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: none;
+  color: var(--vp-c-text-3);
+  font-size: 1.3rem;
+  cursor: pointer;
+  border-radius: 6px;
+  flex-shrink: 0;
   transition:
     background 0.15s ease,
     color 0.15s ease;
 }
 
-.docs-examples__close:hover {
+.de-modal__close:hover {
   background: var(--vp-c-bg-soft);
   color: var(--vp-c-text-1);
 }
 
-/* --- Demo stage (inside modal) --- */
+/* =========================================================================
+   DEMO STAGE (modal) — completely clean, no overlays
+   ========================================================================= */
 
-.docs-examples__stage {
+.de-stage {
   position: relative;
   flex: 1;
   min-height: 0;
@@ -735,162 +1059,130 @@ onBeforeUnmount(teardownStats)
     linear-gradient(180deg, #12131b 0%, #191b24 100%);
 }
 
-/* --- Dots nav (bottom-left inside stage) --- */
+/* =========================================================================
+   META
+   ========================================================================= */
 
-.docs-examples__dots {
-  position: absolute;
-  bottom: 16px;
-  left: 16px;
-  z-index: 20;
-  max-width: 210px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0px;
-}
-
-/* Use smaller dots inside the stage */
-.docs-examples__stage .docs-examples__dot {
-  width: 14px;
-  height: 14px;
-  margin: 4px;
-  background: rgba(255, 255, 255, 0.85);
-}
-
-.docs-examples__stage .docs-examples__dot:hover {
-  background: #fff;
-}
-
-/* --- Demo name (bottom-right inside stage) --- */
-
-.docs-examples__name {
-  position: absolute;
-  bottom: 16px;
-  right: 20px;
-  z-index: 20;
-  color: rgba(255, 255, 255, 0.6);
-  font-family: system-ui, sans-serif;
-  font-size: 13px;
-  pointer-events: none;
-}
-
-/* --- Meta below stage in modal --- */
-
-.docs-examples__meta {
-  padding: 12px 20px 16px;
+.de-meta {
+  padding: 10px 18px 12px;
   flex-shrink: 0;
   border-top: 1px solid var(--vp-c-divider);
-  max-height: 120px;
-  overflow-y: auto;
 }
 
-.docs-examples__meta h3 {
-  margin: 0 0 0.2rem;
-  font-size: 1rem;
-}
-
-.docs-examples__meta p {
+.de-meta p {
   margin: 0;
   color: var(--vp-c-text-2);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   line-height: 1.5;
 }
 
-/* --- Credit --- */
-
-.docs-examples__credit {
-  margin-top: 0.35rem;
-  font-size: 0.82rem;
-  color: var(--vp-c-text-3);
+.de-meta__credit {
+  margin-top: 0.3rem !important;
+  font-size: 0.78rem !important;
+  color: var(--vp-c-text-3) !important;
 }
 
-.docs-examples__credit a {
-  color: var(--vp-c-brand-1);
+.de-meta__credit a {
+  color: #e8755a;
+  word-break: break-all;
 }
 
-/* --- Code view --- */
+/* =========================================================================
+   CODE VIEW
+   ========================================================================= */
 
-.docs-examples__code-wrap {
+.de-code {
   flex: 1;
   min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-}
-
-.docs-examples__credit a {
-  color: var(--vp-c-brand-1);
-  word-break: break-all;
-}
-
-/* --- Code view --- */
-
-.docs-examples__code-wrap {
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid var(--vp-c-divider);
+  border-radius: 0;
   background: var(--vp-c-bg-soft);
 }
 
-.docs-examples__code-header {
+.de-code__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 1rem;
+  padding: 0.45rem 1rem;
   border-bottom: 1px solid var(--vp-c-divider);
   background: var(--vp-c-bg);
 }
 
-.docs-examples__code-filename {
+.de-code__filename {
   font-family: var(--vp-font-family-mono);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--vp-c-text-1);
 }
 
-.docs-examples__code-lines {
-  font-size: 0.75rem;
+.de-code__lines {
+  font-size: 0.72rem;
   color: var(--vp-c-text-3);
 }
 
-.docs-examples__code-loading {
+.de-code__loading {
   padding: 2rem;
   text-align: center;
   color: var(--vp-c-text-3);
   font-size: 0.85rem;
 }
 
-.docs-examples__code-container {
-  max-height: 600px;
+.de-code__container {
+  flex: 1;
+  min-height: 0;
   overflow: auto;
 }
 
 /* Style the shiki output to match VitePress code blocks */
-.docs-examples__code-container :deep(pre) {
+.de-code__container :deep(pre) {
   margin: 0;
   padding: 1rem;
   background: transparent !important;
   overflow-x: auto;
 }
 
-.docs-examples__code-container :deep(code) {
+.de-code__container :deep(code) {
   font-family: var(--vp-font-family-mono);
   font-size: 0.85rem;
   line-height: 1.65;
 }
 
 /* Shiki dual-theme: light mode uses --shiki-light, dark mode uses --shiki-dark */
-.docs-examples__code-container :deep(.shiki) {
+.de-code__container :deep(.shiki) {
   background-color: transparent !important;
 }
 
-.docs-examples__code-container :deep(.shiki span) {
+.de-code__container :deep(.shiki span) {
   color: var(--shiki-light) !important;
   background-color: var(--shiki-light-bg) !important;
 }
 
-:root.dark .docs-examples__code-container :deep(.shiki span),
-.dark .docs-examples__code-container :deep(.shiki span) {
+:root.dark .de-code__container :deep(.shiki span),
+.dark .de-code__container :deep(.shiki span) {
   color: var(--shiki-dark) !important;
   background-color: var(--shiki-dark-bg) !important;
+}
+
+/* =========================================================================
+   RESPONSIVE
+   ========================================================================= */
+
+@media (max-width: 640px) {
+  .de-modal {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    border: none;
+  }
+
+  .de-preview__hint {
+    display: none;
+  }
+
+  .de-nav__selector {
+    max-width: 160px;
+  }
 }
 </style>
