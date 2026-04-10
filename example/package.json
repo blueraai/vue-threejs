@@ -5,8 +5,8 @@
   "description": "Demo source files for vue-threejs docs",
   "type": "module",
   "dependencies": {
-    "@xperimntl/vue-threejs-drei": "1.0.0",
-    "@xperimntl/vue-threejs-postprocessing": "1.0.0",
+    "@xperimntl/vue-threejs-drei": "1.1.0",
+    "@xperimntl/vue-threejs-postprocessing": "1.1.0",
     "postprocessing": ">=6.30",
     "three": "^0.183.2",
     "three-stdlib": "^2.36.1",

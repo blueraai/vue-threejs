@@ -1,5 +1,11 @@
 # @vue-three/eslint-plugin
 
+## 1.1.0
+
+### Minor Changes
+
+- c7e33c6: Initial publish under @xperimntl scope
+
 ## 1.1.1
 
 ### Patch Changes
