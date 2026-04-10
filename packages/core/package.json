@@ -33,7 +33,7 @@
   "dependencies": {
     "@babel/runtime": "^7.29.2",
     "@types/webxr": "*",
-    "@vueuse/core": "^10.0.0",
+    "@vueuse/core": "^14.2.1",
     "base64-js": "^1.5.1",
     "buffer": "^6.0.3",
     "zustand": "^5.0.12"
