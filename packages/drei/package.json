@@ -3,6 +3,15 @@
   "version": "1.1.0",
   "description": "Vue-native helpers for @xperimntl/vue-threejs",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chris-xperimntl/vue-threejs.git",
+    "directory": "packages/drei"
+  },
+  "homepage": "https://github.com/chris-xperimntl/vue-threejs/tree/master/packages/drei#readme",
+  "bugs": {
+    "url": "https://github.com/chris-xperimntl/vue-threejs/issues"
+  },
   "main": "dist/xperimntl-vue-threejs-drei.cjs.js",
   "module": "dist/xperimntl-vue-threejs-drei.esm.js",
   "types": "dist/xperimntl-vue-threejs-drei.cjs.d.ts",
