@@ -1,5 +1,11 @@
 # @bluera/vue-threejs-rapier
 
+## 1.1.1
+
+### Patch Changes
+
+- 7e10ae1: Add .npmignore to exclude source files from tarballs and add repository metadata
+
 ## 1.1.0
 
 ### Minor Changes
